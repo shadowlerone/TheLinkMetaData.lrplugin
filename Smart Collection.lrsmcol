@@ -1,0 +1,21 @@
+s = {
+	id = "63023F45-3E4A-4FD5-BA95-4AFE294083B8",
+	internalName = "Smart Collection",
+	title = "Smart Collection",
+	type = "LibrarySmartCollection",
+	value = {
+		{
+			criteria = "sdktext:lewis.TheLink.Metadata.cycle",
+			operation = "beginsWith",
+			value = "06",
+			value2 = "",
+		},
+		{
+			criteria = "sdk:lewis.TheLink.Metadata.section",
+			operation = "==",
+			value = "news",
+		},
+		combine = "intersect",
+	},
+	version = 0,
+}

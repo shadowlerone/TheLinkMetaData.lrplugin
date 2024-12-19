@@ -1,0 +1,7 @@
+Plug-in error log for plug-in at: D:\Downloads\modeling-info.lrplugin\TheLinkMetaData.lrplugin
+
+**** Error 1
+
+This plug-in’s post-processing task did not finish successfully.
+assertion failed!
+
