@@ -46,8 +46,8 @@ function exportServiceProvider.processRenderedPhotos(functionContext, exportCont
 	logger:trace("Setting up Scope")
 	local progressScope = exportContext:configureProgress {
 		title = nPhotos > 1
-					and LOC( "$$$/GPhoto/Publish/Progress=Publishing ^1 photos to GPhoto", nPhotos )
-					or LOC "$$$/GPhoto/Publish/Progress/One=Publishing one photo to GPhoto",
+					and LOC( "$$$/GPhoto/Publish/Progress=Exporting ^1 photos", nPhotos )
+					or LOC "$$$/GPhoto/Publish/Progress/One=Exporting one photo",
 	}
 	logger:trace("Scope Setup")
 
@@ -103,10 +103,10 @@ function exportServiceProvider.processRenderedPhotos(functionContext, exportCont
 					metadata.online_print,
 				}
 				logger:trace 'folder table created'
-				local section_folder = {
-					metadata.cycle,
-					metadata.section,
-				}
+				-- local section_folder = {
+				-- 	metadata.cycle,
+				-- 	metadata.section,
+				-- }
 				logger:trace 'section folder table created'
 				logger:trace 'adding optional metadata'
 				if metadata.type then
@@ -115,9 +115,9 @@ function exportServiceProvider.processRenderedPhotos(functionContext, exportCont
 				end
 
 				local new_filename = LrPathUtils.addExtension(table.concat(file, "."), 'jpg')
-				local section_folder_name = table.concat(section_folder, ".")
+				-- local section_folder_name = table.concat(section_folder, ".")
 				local article_folder_name = table.concat(article_folder, ".")
-				local outdir = LrPathUtils.child(section_folder_name, article_folder_name)
+				local outdir = article_folder_name
 				local dest_dir = LrPathUtils.child(LrPathUtils.parent(pathOrMessage), outdir)
 				LrFileUtils.createAllDirectories(
 					dest_dir
