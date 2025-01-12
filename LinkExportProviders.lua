@@ -89,6 +89,7 @@ function exportServiceProvider.processRenderedPhotos(functionContext, exportCont
 					metadata.cycle,
 					metadata.section,
 					metadata.slug,
+					metadata.author,
 					metadata.online_print,
 					metadata.contributor,
 					LrPathUtils.removeExtension(rendition.photo:getFormattedMetadata("preservedFileName")),
@@ -100,6 +101,7 @@ function exportServiceProvider.processRenderedPhotos(functionContext, exportCont
 					metadata.cycle,
 					metadata.section,
 					metadata.slug,
+					metadata.author,
 					metadata.online_print,
 				}
 				logger:trace 'folder table created'
