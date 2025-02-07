@@ -112,7 +112,7 @@ LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
         f:row{f:static_text{
             alignment = "right",
             width = LrView.share "label_width",
-            title = "New value: "
+            title = "Issue Number: "
         }, updateField, checkbox --[[ f:push_button{
             title = "Update",
 
@@ -139,13 +139,12 @@ LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
         props.cycle = updateField.value
         props.special_issue = checkbox.value
         catalog:withWriteAccessDo("Create parent collection set", function()
-            parent = catalog:createCollectionSet("Issue ".. string.format("%02d", props.cycle), nil, true)
+            parent = catalog:createCollectionSet("Issue " .. string.format("%02d", props.cycle), nil, true)
         end)
         for _, section in pairs(Sections) do
             if section.value == nil then
                 catalog:withWriteAccessDo("Create child collection set", function()
-                    child = catalog:createSmartCollection(
-                        "Issue " .. string.format("%02d", props.cycle), {
+                    child = catalog:createSmartCollection("Issue " .. string.format("%02d", props.cycle), {
                         {
                             criteria = "sdktext:lewis.TheLink.Metadata.cycle",
                             operation = "beginsWith",
@@ -161,8 +160,7 @@ LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
                 end)
             else
                 catalog:withWriteAccessDo("Create child collection set", function()
-                    child = catalog:createSmartCollection(table.concat(
-                        {"Issue " .. string.format("%02d", props.cycle), section.title}, '.'), {
+                    child = catalog:createSmartCollection(section.title, {
                         {
                             criteria = "sdktext:lewis.TheLink.Metadata.cycle",
                             operation = "beginsWith",
