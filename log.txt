@@ -1,7 +1,12 @@
-Plug-in error log for plug-in at: D:\Downloads\modeling-info.lrplugin\TheLinkMetaData.lrplugin
+Plug-in error log for plug-in at: C:\Users\shadowlerone\Documents\GitHub\TheLinkMetaData.lrplugin
 
 **** Error 1
 
-This plug-in’s post-processing task did not finish successfully.
-assertion failed!
+An error occurred while attempting to run one of the plug-in’s scripts.
+LinkSetupCollections.lua:140: ')' expected near '!'
+
+**** Error 2
+
+The plug-in encountered an error when performing the menu item “Automatically create collections...”.
+LinkSetupCollections.lua:140: ')' expected near '!'
 
