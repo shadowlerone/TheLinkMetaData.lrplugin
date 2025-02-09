@@ -6,6 +6,7 @@ local LrLogger = import 'LrLogger'
 local LrDate = import 'LrDate'
 local LrView = import 'LrView'
 local LrBinding = import 'LrBinding'
+local LrColor = import 'LrColor'
 local Sections = require 'LinkSections'
 -- Sections = {{
 --     value = 'news',
@@ -27,6 +28,53 @@ local Sections = require 'LinkSections'
 --     title = ""
 -- }}
 
+local catalog
+local cycle_string
+function generate(parent, name)
+	for _, section in pairs(Sections) do
+		if section.value == nil then
+			catalog:withWriteAccessDo("Create child collection set", function()
+				child = catalog:createSmartCollection("@all", {
+					{
+						criteria = "sdktext:lewis.TheLink.Metadata.cycle",
+						operation = "beginsWith",
+						value = cycle_string
+					},
+					{
+						criteria = "sdktext:lewis.TheLink.Metadata.online_print",
+						operation = "beginsWith",
+						value = name
+					},
+					combine = "intersect"
+				}, parent, true)
+			end)
+		else
+			catalog:withWriteAccessDo("Create child collection set", function()
+				child = catalog:createSmartCollection( cycle_string .. "." .. section.title, {
+					{
+						criteria = "sdktext:lewis.TheLink.Metadata.cycle",
+						operation = "beginsWith",
+						value = cycle_string
+					},
+					{
+						criteria = "sdk:lewis.TheLink.Metadata.section",
+						operation = "==",
+						value = section.value
+					},
+					{
+						criteria = "sdktext:lewis.TheLink.Metadata.online_print",
+						operation = "beginsWith",
+						value = name
+					},
+					combine = "intersect"
+				}, parent, true)
+			end)
+		end
+
+	end
+end
+
+
 LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
 
     LrDialogs.attachErrorDialogToFunctionContext(context)
@@ -34,7 +82,7 @@ LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
     -- TODO: Create Dialog to get cycle number
     -- TODO: Ask if it is a special issue
     local progress = LrProgressScope {
-        title = "Exporting File Lists..."
+        title = "Creating Issue Collection..."
     }
     progress:attachToFunctionContext(context)
 
@@ -43,7 +91,7 @@ LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
     props.cycle = 1
     props.special_issue = false
 
-    local catalog = LrApplication.activeCatalog()
+    catalog = LrApplication.activeCatalog()
     local cycle = 7
     local special_issue = false
 
@@ -71,14 +119,14 @@ LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
     -- This is the function that will run when the value props.myString is changed.
 
     local function myCalledFunction()
-        outputToLog("props.cycle has been updated.")
+        -- outputToLog("props.cycle has been updated.")
         staticTextValue.title = updateField.value
-        staticTextValue.text_color = LrColor(1, 0, 0)
+        -- staticTextValue.text_color = LrColor(1, 0, 0)
     end
     local function myCalledFunction2()
-        outputToLog("props.special_issue has been updated.")
+        -- outputToLog("props.special_issue has been updated.")
         staticCheckValue.title = special_issue.value
-        staticCheckValue.text_color = LrColor(1, 0, 0)
+        -- staticCheckValue.text_color = LrColor(1, 0, 0)
     end
 
     -- Add an observer to the property table.  We pass in the key and the function
@@ -138,54 +186,38 @@ LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
     if run ~= "cancel" then
         props.cycle = updateField.value
         props.special_issue = checkbox.value
+        cycle_string = string.format("%02d", props.cycle)
         catalog:withWriteAccessDo("Create parent collection set", function()
-            parent = catalog:createCollectionSet("Issue " .. string.format("%02d", props.cycle), nil, true)
+            parent = catalog:createCollectionSet("Issue " .. cycle_string, nil, true)
+			child = catalog:createSmartCollection("@all", {
+				{
+					criteria = "sdktext:lewis.TheLink.Metadata.cycle",
+					operation = "beginsWith",
+					value = cycle_string
+				},
+				combine = "intersect"
+			
+			},parent,true)
         end)
-        for _, section in pairs(Sections) do
-            if section.value == nil then
-                catalog:withWriteAccessDo("Create child collection set", function()
-                    child = catalog:createSmartCollection("Issue " .. string.format("%02d", props.cycle), {
-                        {
-                            criteria = "sdktext:lewis.TheLink.Metadata.cycle",
-                            operation = "beginsWith",
-                            value = string.format("%02d", props.cycle)
-                        },
-                        {
-                            criteria = "sdk:lewis.TheLink.Metadata.section",
-                            operation = "==",
-                            value = section.value
-                        },
-                        combine = "intersect"
-                    }, parent, true)
-                end)
-            else
-                catalog:withWriteAccessDo("Create child collection set", function()
-                    child = catalog:createSmartCollection(section.title, {
-                        {
-                            criteria = "sdktext:lewis.TheLink.Metadata.cycle",
-                            operation = "beginsWith",
-                            value = string.format("%02d", props.cycle)
-                        },
-                        {
-                            criteria = "sdk:lewis.TheLink.Metadata.section",
-                            operation = "==",
-                            value = section.value
-                        },
-                        combine = "intersect"
-                    }, parent, true)
-                end)
-            end
 
-        end
-        if (special_issue == true) then
+        catalog:withWriteAccessDo("Create child collection set", function()
+            online_collection = catalog:createCollectionSet("online", parent, true)
+            print_collection = catalog:createCollectionSet("print", parent, true)
+        end)
+
+
+		-- online
+		generate(online_collection, "online")
+		generate(print_collection, "print")
+        --[[ if (special_issue == true) then
             for _, section in pairs(Sections) do
                 catalog:withWriteAccessDo("Create child collection set", function()
-                    child = catalog:createSmartCollection(table.concat(
-                        {"Special Issue", string.format("%02d", cycle), section.title}, '.'), {
+                    child = catalog:createSmartCollection(table.concat({"Special Issue", cycle_string, section.title},
+                        '.'), {
                         {
                             criteria = "sdktext:lewis.TheLink.Metadata.cycle",
                             operation = "beginsWith",
-                            value = string.format("%02d", cycle)
+                            value = cycle_string
                         },
                         {
                             criteria = "sdk:lewis.TheLink.Metadata.section",
@@ -197,7 +229,7 @@ LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
                 end)
 
             end
-        end
+        end ]]
     end
 
 end)
