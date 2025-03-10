@@ -13,6 +13,14 @@ return {
 	{
 		title = "Automatically create collections...",
 		file = "LinkSetupCollections.lua",
+	  },
+	{
+		title = "Automatically create collection from image...",
+		file = "LinkSetupSmartCollectionFromImage.lua",
+	  },
+	{
+		title = "Apply metadata from string",
+		file = "LinkApplyMetadataFromString.lua",
 	  }
    },
    LrExportServiceProvider = {
