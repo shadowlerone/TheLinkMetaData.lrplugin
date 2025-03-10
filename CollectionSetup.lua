@@ -104,66 +104,17 @@ function SetupCollections(context, d)
             title = props.special_issue
         }
 
-        -- This is the function that will run when the value props.myString is changed.
-
-        local function myCalledFunction()
-            -- outputToLog("props.cycle has been updated.")
-            staticTextValue.title = updateField.value
-            -- staticTextValue.text_color = LrColor(1, 0, 0)
-        end
-        local function myCalledFunction2()
-            -- outputToLog("props.special_issue has been updated.")
-            staticCheckValue.title = special_issue.value
-            -- staticCheckValue.text_color = LrColor(1, 0, 0)
-        end
-
-        -- Add an observer to the property table.  We pass in the key and the function
-        -- we want called when the value for the key changes.
-        -- Note:  Only when the value changes will there be a notification sent which
-        -- causes the function to be invoked.
-
-        props:addObserver("cycle", myCalledFunction)
-        props:addObserver("special_issue", myCalledFunction2)
-
+       
         -- Create the contents for the dialog.
 
         local c = f:column{
             spacing = f:dialog_spacing(),
-            -- spacing = f:dialog_spacing(),
-            --[[  f:row{
-            fill_horizontal = 1,
-            f:static_text{
-                alignment = "right",
-                width = LrView.share "label_width",
-                title = "Bound value: "
-            },
-            staticTextValue,
-            f:static_text{
-                alignment = "right",
-                width = LrView.share "label_width",
-                title = "Bound value: "
-            },
-            staticCheckValue
-        }, -- end f:row ]]
+            
             f:row{f:static_text{
                 alignment = "right",
                 width = LrView.share "label_width",
                 title = "Issue Number: "
-            }, updateField, checkbox --[[ f:push_button{
-            title = "Update",
-
-            -- When the 'Update' button is clicked.
-
-            action = function()
-                outputToLog("Update button clicked.")
-                staticTextValue.text_color = LrColor(1, 0, 0)
-
-                -- When this property is updated, the observer is notified.
-
-                props.cycle = updateField.value
-                props.special_issue = checkbox.value
-            end
-        } ]] } -- end row
+            }, updateField, checkbox } -- end row
         } -- end column
 
         local run = LrDialogs.presentModalDialog {
