@@ -26,5 +26,9 @@ return {
    LrExportServiceProvider = {
 	title="Export with Link Naming Scheme",
 	file="LinkExportProviders.lua"
-   }
+   },
+--    LrExportServiceProvider = {
+-- 		title="Prod Export",
+-- 		file="LinkProd.lua"
+--    }
 }
