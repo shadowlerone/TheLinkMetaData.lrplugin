@@ -15,6 +15,19 @@ logger.logLevel = "debug"
 
 local exportServiceProvider = {}
 
+-- Source - https://stackoverflow.com/a
+-- Posted by tonypdmtr
+-- Retrieved 2025-11-30, License - CC BY-SA 3.0
+
+function CleanNils(t)
+  local ans = {}
+  for _,v in pairs(t) do
+    ans[ #ans+1 ] = v
+  end
+  return ans
+end
+
+
 -- exportServiceProvider.name = "Export in the Link Format"
 exportServiceProvider.allowFileFormats = {'JPEG'}
 exportServiceProvider.allowColorSpaces = {'sRGB'}
@@ -31,11 +44,14 @@ exportServiceProvider.hidePrintResolution = true
 -- TODO: should be true
 exportServiceProvider.canExportVideo = false -- video is not supported through this sample plug-in
 
+-- exportServiceProvider.canExportToTemporaryLocation = true
+
 
 -- TODO: filter images that are missing a metadata field
 -- TODO: custom error messages
 
 function exportServiceProvider.processRenderedPhotos(functionContext, exportContext)
+	logger:trace('\n\n\n===========================================')
 	logger:trace('processRenderedPhotos')
 
 	local exportSession = exportContext.exportSession
@@ -68,9 +84,9 @@ function exportServiceProvider.processRenderedPhotos(functionContext, exportCont
 
 			if success then
 				logger:trace "Success..."
-
+				local photo = rendition.photo
 				logger:trace "Getting raw metadata"
-				local rawMetaData = rendition.photo:getRawMetadata("customMetadata")
+				local rawMetaData = photo:getRawMetadata("customMetadata")
 				logger:trace "Raw Metadata obtained "
 				local metadata = {}
 				-- metadata["lewis.TheLink.Metadata"] = {}
@@ -86,50 +102,60 @@ function exportServiceProvider.processRenderedPhotos(functionContext, exportCont
 				logger:trace 'Creating file name table'
 				
 				local file = {
-					metadata.cycle,
-					metadata.section,
-					metadata.slug,
-					metadata.author,
-					metadata.online_print,
-					metadata.contributor,
-					LrPathUtils.removeExtension(rendition.photo:getFormattedMetadata("preservedFileName")),
+					cycle = metadata.cycle or '00',
+					type = metadata.type,
+					section = metadata.section or "unknown",
+					slug = metadata.slug or "unknown",
+					author = metadata.author or "unknown",
+					online_print = metadata.online_print or "online",
+					contributor  = metadata.contributor or photo:getFormattedMetadata('artist') or "unknown",
+					filename = LrPathUtils.removeExtension(photo:getFormattedMetadata("preservedFileName")),
 				}
-				
+				logger:trace 'File table'
+				logger:trace ('\t' .. tostring(file.cycle))
+				logger:trace ('\t' .. tostring(file.section))
+				logger:trace ('\t' .. tostring(file.slug))
+				logger:trace ('\t' .. tostring(file.author))
+				logger:trace ('\t' .. tostring(file.online_print))
+				logger:trace ('\t' .. tostring(file.contributor))
+				logger:trace ('\t' .. tostring(file.filename))
+				logger:trace '---'
+				local file_array = {
+					file.cycle, file.type, file.section, file.slug, file.author, file.online_print, file.contributor, file.filename
+				}
+				file_array = CleanNils(file_array)
+				-- logger:trace ('\t' .. tostring(article_folder.cycle))
+				logger:trace '---'
 				logger:trace 'File name table created'
 				logger:trace 'Creating folder table'
-				local article_folder = {
-					metadata.cycle,
-					metadata.section,
-					metadata.slug,
-					metadata.author,
-					metadata.online_print,
-				}
-				logger:trace 'folder table created'
-				-- local section_folder = {
-				-- 	metadata.cycle,
-				-- 	metadata.section,
-				-- }
-				logger:trace 'section folder table created'
-				logger:trace 'adding optional metadata'
-				if metadata.type then
-					table.insert(file, 2, metadata.type)
-					table.insert(article_folder, 2, metadata.type)
-				end
 
-				local new_filename = LrPathUtils.addExtension(table.concat(file, "."), 'jpg')
+
+				local article_folder = {
+					file.cycle, file.type, file.section, file.slug, file.author, file.online_print
+				}
+				article_folder = CleanNils(article_folder)				
+				local new_filename = LrPathUtils.addExtension(table.concat(file_array, "."), LrPathUtils.extension(rendition.destinationPath))
+				logger:trace('Renamed file: ' .. new_filename)
 				-- local section_folder_name = table.concat(section_folder, ".")
+				
 				local article_folder_name = table.concat(article_folder, ".")
+				logger:trace ('Named Folder: ' .. article_folder_name )
 				local outdir = article_folder_name
 				local dest_dir = LrPathUtils.child(LrPathUtils.parent(pathOrMessage), outdir)
-				LrFileUtils.createAllDirectories(
+				-- logger:trace 'Create directories'
+				logger:trace ('Creating directories: ' .. tostring(LrFileUtils.createAllDirectories(
 					dest_dir
-				)
+				)))
+				
 				local full_output_filepath = LrPathUtils.child (dest_dir,new_filename)
-				LrFileUtils.copy(pathOrMessage, full_output_filepath)
+				logger:trace ('Full output path: ' .. full_output_filepath)
+				logger:trace ('Copied image: ' .. tostring(LrFileUtils.copy(pathOrMessage, full_output_filepath)))
 				-- os:rename(LrPathUtils.child (dest_dir,LrPathUtils.leafName(pathOrMessage)), LrPathUtils.child (dest_dir,new_filename))
 				-- local tmp_name = LrPathUtils.leafName(pathOrMessage)
 				-- DO the magic
-				LrFileUtils.delete( pathOrMessage )
+				if LrFileUtils.delete( pathOrMessage ) then
+					logger:trace 'Deleted image'
+				end
 
 
 			end

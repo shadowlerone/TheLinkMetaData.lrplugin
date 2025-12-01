@@ -30,7 +30,7 @@ local CollectionSetup = require "CollectionSetup"
 --     title = ""
 -- }}
 
-
+-- TODO: ADD AUTOMATIC PUBLISH COLLECTION CREATION
 
 LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
 
