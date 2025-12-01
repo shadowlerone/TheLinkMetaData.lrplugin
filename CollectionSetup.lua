@@ -76,9 +76,11 @@ function SetupCollections(context, d)
 
     catalog = LrApplication.activeCatalog()
     local cycle = 7
+    local volume = 46
     local special_issue = false
     if d ~= nil then
         cycle = d.cycle
+        volume = d.volume or 46
         special_issue = false
         props.cycle = d.cycle
         props.special_issue = false
@@ -93,28 +95,41 @@ function SetupCollections(context, d)
             unchecked_value = false
         })
 
-        local updateField = f:edit_field{
+        local cycleField = f:edit_field{
             immediate = true,
             value = ""
         }
-        local staticTextValue = f:static_text{
+        local volumeField = f:edit_field{
+            immediate = true,
+            value = ""
+        }
+        local staticTextValueVolume = f:static_text{
+            title = props.Volume
+        }
+        local staticTextValueCycle = f:static_text{
             title = props.cycle
         }
         local staticCheckValue = f:static_text{
             title = props.special_issue
         }
 
-       
         -- Create the contents for the dialog.
 
         local c = f:column{
             spacing = f:dialog_spacing(),
-            
+
             f:row{f:static_text{
                 alignment = "right",
                 width = LrView.share "label_width",
                 title = "Issue Number: "
-            }, updateField, checkbox } -- end row
+            }, 
+			volumeField,
+			f:static_text{
+                alignment = "right",
+                width = LrView.share "label_width",
+                title = "Issue Number: "
+            }, 
+			cycleField, checkbox} -- end row
         } -- end column
 
         local run = LrDialogs.presentModalDialog {
@@ -122,7 +137,9 @@ function SetupCollections(context, d)
             contents = c
         }
 
-        props.cycle = updateField.value
+
+		props.volume = volumeField.value;
+        props.cycle = cycleField.value
         props.special_issue = checkbox.value
     end
     if run ~= "cancel" then

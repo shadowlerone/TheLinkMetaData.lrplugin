@@ -12,12 +12,20 @@ return {
     -- Set "searchable" to true to allow as a search criteria in smart collections.
     -- If both "searchable" and "browsable" are true, the field shows up under "Metadata" in Library's grid filter.
     {
+        id = 'volume',
+        title = 'Volume',
+        dataType = 'string',
+        searchable = true,
+        browsable = true
+    },
+    {
         id = 'cycle',
         title = 'Cycle',
         dataType = 'string',
         searchable = true,
         browsable = true
-    }, {
+    },
+	 {
         id = 'type',
         title = 'Type',
         dataType = 'enum',

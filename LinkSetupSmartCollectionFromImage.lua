@@ -21,12 +21,12 @@ LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
 
     LrSelection.deselectOthers()
     photo = catalog:getTargetPhoto()
-    cycle = photo:getPropertyForPlugin(_PLUGIN, "cycle")
-    type = photo:getPropertyForPlugin(_PLUGIN, "type")
-    p_section = photo:getPropertyForPlugin(_PLUGIN, "section")
-    slug = photo:getPropertyForPlugin(_PLUGIN, "slug")
-    author = photo:getPropertyForPlugin(_PLUGIN, "author")
-    online_print = photo:getPropertyForPlugin(_PLUGIN, "online_print")
+    cycle = photo:getPropertyForPlugin(_PLUGIN, "cycle") or "00"
+    type = photo:getPropertyForPlugin(_PLUGIN, "type") or ""
+    p_section = photo:getPropertyForPlugin(_PLUGIN, "section") or "other"
+    slug = photo:getPropertyForPlugin(_PLUGIN, "slug") or "unknown"
+    author = photo:getPropertyForPlugin(_PLUGIN, "author") or "unknown"
+    online_print = photo:getPropertyForPlugin(_PLUGIN, "online_print") or "online"
     cycle_string = string.format("%02d", cycle)
 
     file = {cycle_string, p_section, slug, author, online_print}
