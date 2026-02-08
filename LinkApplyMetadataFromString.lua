@@ -37,6 +37,9 @@ function mysplit(inputstr, sep)
     end
     return t
 end
+function trim(s)
+  return (string.gsub(s, "^%s*(.-)%s*$", "%1"))
+end
 
 LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
     LrDialogs.attachErrorDialogToFunctionContext(context)
@@ -77,7 +80,7 @@ LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
     inputstring = updateField.value:match '^%s*(.*%S)' or ''
     data = mysplit(inputstring, ".")
     if run ~= "cancel" then
-        cycle = data[1]
+        cycle = trim(data[1])
         cycle_string = string.format("%02d", cycle)
         t_photo_contributor = ""
         t_type = nil
@@ -92,9 +95,9 @@ LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
                     end
                 end
             end
-            t_slug = data[3]
-            t_author = data[4]
-            t_online = data[5]
+            t_slug = trim(data[3])
+            t_author = trim(data[4])
+            t_online = trim(data[5])
         end
         if (#data == 6) then
             section2 = false
@@ -105,10 +108,10 @@ LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
                         string.lower(string.sub(data[2], 1, 3)) == string.lower(string.sub(v.value, 1, 3))) then
                         -- data[2] is section
                         t_section = v.value
-                        t_slug = data[3]
-                        t_author = data[4]
-                        t_online = data[5]
-                        t_photo_contributor = data[6]
+                        t_slug = trim(data[3])
+                        t_author = trim(data[4])
+                        t_online = trim(data[5])
+                        t_photo_contributor = trim(data[6])
 
                         section2 = true
                         break
@@ -134,9 +137,9 @@ LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
                         end
                     end
                 end
-                t_slug = data[4]
-                t_author = data[5]
-                t_online = data[6]
+                t_slug = trim(data[4])
+                t_author = trim(data[5])
+                t_online = trim(data[6])
             end
         end
         --[[  if (#data == 7) then
