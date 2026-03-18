@@ -20,16 +20,7 @@ local cycle_string
 LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
     LrDialogs.attachErrorDialogToFunctionContext(context)
     catalog = LrApplication.activeCatalog()
-
-    -- LrSelection.deselectOthers()
     photos = catalog:getTargetPhotos()
-    --[[ photo = catalog:getTargetPhoto()
-    cycle = photo:getPropertyForPlugin(_PLUGIN, "cycle")
-    type = photo:getPropertyForPlugin(_PLUGIN, "type")
-    p_section = photo:getPropertyForPlugin(_PLUGIN, "section")
-    slug = photo:getPropertyForPlugin(_PLUGIN, "slug")
-    author = photo:getPropertyForPlugin(_PLUGIN, "author")
-    online_print = photo:getPropertyForPlugin(_PLUGIN, "online_print") ]]
 
     local f = LrView.osFactory()
     local updateField = f:edit_field{
@@ -56,10 +47,10 @@ LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
     inputstring = updateField.value:match '^%s*(.*%S)' or ''
     data = mysplit(inputstring, ".")
     if run ~= "cancel" then
-        cycle = trim(data[1])
+        local cycle = trim(data[1])
         cycle_string = string.format("%02d", cycle)
-        t_photo_contributor = ""
-        t_type = nil
+        local t_photo_contributor = ""
+        local t_type = nil
 
         if (#data == 5) then
             -- t_section = data[2]
@@ -96,7 +87,7 @@ LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
             end
             if not section2 then
                 -- data[2] is type
-                for i, v in ipairs(types) do
+                for i, v in ipairs(LinkTypes) do
                     if v.value ~= nil then
                         if (string.lower(string.sub(data[2], 1, 3)) == string.lower(string.sub(v.title, 1, 3)) or
                             string.lower(string.sub(data[2], 1, 3)) == string.lower(string.sub(v.value, 1, 3))) then
@@ -121,15 +112,24 @@ LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
         --[[  if (#data == 7) then
 
 		end ]]
-        for i, v in ipairs(photos) do
-            catalog:withWriteAccessDo("Create child collection", function()
-                v:setPropertyForPlugin(_PLUGIN, "cycle", cycle_string)
-                v:setPropertyForPlugin(_PLUGIN, "type", t_type)
-                v:setPropertyForPlugin(_PLUGIN, "section", t_section)
-                v:setPropertyForPlugin(_PLUGIN, "slug", t_slug)
-                v:setPropertyForPlugin(_PLUGIN, "author", t_author)
-                v:setPropertyForPlugin(_PLUGIN, "online_print", t_online)
-                v:setPropertyForPlugin(_PLUGIN, "contributor", t_photo_contributor)
+        for i, photo in ipairs(photos) do
+			local fallback = {
+				cycle = photo:getPropertyForPlugin(_PLUGIN,"cycle"),
+				type = photo:getPropertyForPlugin(_PLUGIN,"type"),
+				section = photo:getPropertyForPlugin(_PLUGIN,"section"),
+				slug = photo:getPropertyForPlugin(_PLUGIN,"slug"),
+				author = photo:getPropertyForPlugin(_PLUGIN,"author"),
+				online = photo:getPropertyForPlugin(_PLUGIN,"online_print"),
+				contributor  = photo:getPropertyForPlugin(_PLUGIN,"contributor"),
+			}
+            catalog:withWriteAccessDo("Setting metadata values", function()
+                photo:setPropertyForPlugin(_PLUGIN, "cycle", cycle_string or fallback.cycle)
+                photo:setPropertyForPlugin(_PLUGIN, "type", t_type or fallback.type)
+                photo:setPropertyForPlugin(_PLUGIN, "section", t_section or fallback.section)
+                photo:setPropertyForPlugin(_PLUGIN, "slug", t_slug or fallback.slug)
+                photo:setPropertyForPlugin(_PLUGIN, "author", t_author or fallback.author)
+                photo:setPropertyForPlugin(_PLUGIN, "online_print", t_online or fallback.online)
+                photo:setPropertyForPlugin(_PLUGIN, "contributor", t_photo_contributor or fallback.contributor)
             end)
         end
     end

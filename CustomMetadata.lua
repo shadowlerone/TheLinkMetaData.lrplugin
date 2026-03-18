@@ -7,7 +7,7 @@
 local Sections = require 'utils.LinkSections'
 local LinkTypes = require 'utils.LinkTypes'
 return {
-    schemaVersion = 1, -- increment this value any time you make a change to the field definitions below
+    schemaVersion = 2, -- increment this value any time you make a change to the field definitions below
 
     metadataFieldsForPhotos = { -- You can have as many fields as you like (the example below shows three)... just make sure each 'id' and 'title' are unique.
     -- Set "searchable" to true to allow as a search criteria in smart collections.
@@ -55,7 +55,11 @@ return {
     }, {
         id = 'online_print',
         title = 'Online or Print',
-        dataType = 'string',
+        dataType = 'enum',
+		values = {
+			{value="online",title="Online"},
+			{value="print",title="Print"},
+		},
         searchable = true,
         browsable = true
     }, {

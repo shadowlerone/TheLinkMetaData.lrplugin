@@ -12,84 +12,63 @@ local Sections = require 'LinkSections'
 local CollectionSetup = require "CollectionSetup"
 -- local LinkSetupCollections = require 'LinkSetupCollections'
 
+
 local catalog
-local cycle_string
 
 LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
-    LrDialogs.attachErrorDialogToFunctionContext(context)
-    catalog = LrApplication.activeCatalog()
+	LrDialogs.attachErrorDialogToFunctionContext(context)
+	catalog = LrApplication.activeCatalog()
+	local photos = catalog:getTargetPhotos()
 
-    LrSelection.deselectOthers()
-    photo = catalog:getTargetPhoto()
-    cycle = photo:getPropertyForPlugin(_PLUGIN, "cycle") or "00"
-    type = photo:getPropertyForPlugin(_PLUGIN, "type") or ""
-    p_section = photo:getPropertyForPlugin(_PLUGIN, "section") or "other"
-    slug = photo:getPropertyForPlugin(_PLUGIN, "slug") or "unknown"
-    author = photo:getPropertyForPlugin(_PLUGIN, "author") or "unknown"
-    online_print = photo:getPropertyForPlugin(_PLUGIN, "online_print") or "online"
-    cycle_string = string.format("%02d", cycle)
+	for i, photo in ipairs(photos) do
+		local cycle = photo:getPropertyForPlugin(_PLUGIN, "cycle") or "00"
+		local type = photo:getPropertyForPlugin(_PLUGIN, "type") or ""
+		local p_section = photo:getPropertyForPlugin(_PLUGIN, "section") or "other"
+		local slug = photo:getPropertyForPlugin(_PLUGIN, "slug") or "unknown"
+		local author = photo:getPropertyForPlugin(_PLUGIN, "author") or "unknown"
+		local online_print = photo:getPropertyForPlugin(_PLUGIN, "online_print") or "online"
+		local cycle_string = string.format("%02d", cycle)
 
-    file = {cycle_string, p_section, slug, author, online_print}
-    if type ~= nil then
-        table.insert(file, 2, type)
-        -- table.insert(article_folder, 2, metadata.type)
-    end
-    collections = SetupCollections(context, {
-        cycle = cycle
-    })
+		local file = { cycle_string, p_section, slug, author, online_print }
+		if type ~= nil then
+			table.insert(file, 2, type)
+			-- table.insert(article_folder, 2, metadata.type)
+		end
+		local collections = SetupCollections(context, {
+			cycle = cycle
+		})
 
-    if online_print == "print" then
-        col = collections.p
-    elseif online_print == "online" then
-        col = collections.o
-    end
-    local s_section
-    for _, section in pairs(Sections) do
-        if section.value ~= nil then
-            if section.value == p_section then
-                s_section = section
-            end
-        end
-    end
-    for k, v in pairs(col:getChildCollectionSets()) do
+		if online_print == "print" then
+			col = collections.p
+		elseif online_print == "online" then
+			col = collections.o
+		end
+		local s_section
+		for _, section in pairs(Sections) do
+			if section.value ~= nil then
+				if section.value == p_section then
+					s_section = section
+				end
+			end
+		end
+		for k, child_collection in pairs(col:getChildCollectionSets()) do
+			if child_collection:getName() == (cycle_string .. "." .. s_section.title) then
+				local c_name = table.concat(file, ".")
+				catalog:withWriteAccessDo("Create child collection", function()
+					Create_Article_Smart_Collection(child_collection, c_name, s_section, online_print, slug, author)
+				end)
+				break
+			end
+		end
+	end
 
-        if v:getName() == (cycle_string .. "." .. s_section.title) then
-            c_name = table.concat(file, ".")
-            catalog:withWriteAccessDo("Create child collection", function()
-                child = catalog:createSmartCollection(c_name, {
-                    {
-                        criteria = "sdktext:lewis.TheLink.Metadata.cycle",
-                        operation = "beginsWith",
-                        value = cycle_string
-                    },
-                    {
-                        criteria = "sdk:lewis.TheLink.Metadata.section",
-                        operation = "==",
-                        value = s_section.value
-                    },
-                    {
-                        criteria = "sdktext:lewis.TheLink.Metadata.online_print",
-                        operation = "beginsWith",
-                        value = online_print
-                    },
-                    {
-                        criteria = "sdktext:lewis.TheLink.Metadata.slug",
-                        operation = "beginsWith",
-                        value = slug
-                    },
-                    {
-                        criteria = "sdktext:lewis.TheLink.Metadata.author",
-                        operation = "beginsWith",
-                        value = author
-                    },
-                    combine = "intersect"
-                }, v, true)
-            end)
-            break
-        end
-    end
 
-    --[[  catalog:withWriteAccessDo("Create parent collection set", function()
+	-- LrSelection.deselectOthers()
+	-- Iterate over every photo
+	-- local photo = catalog:getTargetPhoto()
+
+
+	--[[  catalog:withWriteAccessDo("Create parent collection set", function()
         parent = catalog:createCollectionSet("Issue " .. cycle_string, nil, true)
         child = catalog:createSmartCollection("@all", {
             {
@@ -128,5 +107,5 @@ LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
 			combine = "intersect"
 		}, parent, true)
 	end) ]]
-    --  = photo:getPropertyForPlugin(_PLUGIN, "")
+	--  = photo:getPropertyForPlugin(_PLUGIN, "")
 end)
