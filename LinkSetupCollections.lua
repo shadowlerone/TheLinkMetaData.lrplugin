@@ -7,7 +7,7 @@ local LrDate = import 'LrDate'
 local LrView = import 'LrView'
 local LrBinding = import 'LrBinding'
 local LrColor = import 'LrColor'
-local Sections = require 'LinkSections'
+local Sections = require 'utils.LinkSections'
 
 local CollectionSetup = require "CollectionSetup"
 -- Sections = {{

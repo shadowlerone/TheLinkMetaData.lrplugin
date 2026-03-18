@@ -8,38 +8,14 @@ local LrView = import 'LrView'
 local LrBinding = import 'LrBinding'
 local LrColor = import 'LrColor'
 local LrSelection = import 'LrSelection'
-local Sections = require 'LinkSections'
+local Sections = require 'utils.LinkSections'
+local LinkTypes = require 'utils.LinkTypes'
+require 'utils.str-utils'
 
 local catalog
 local cycle_string
 
-local types = {{
-    value = 'feature',
-    title = 'Feature'
-}, {
-    value = 'photoessay',
-    title = 'Photo Essay'
-}, {
-    value = 'brief',
-    title = 'Brief'
-}, {
-    value = nil,
-    title = ""
-}}
 
-function mysplit(inputstr, sep)
-    if sep == nil then
-        sep = "%s"
-    end
-    local t = {}
-    for str in string.gmatch(inputstr, "([^" .. sep .. "]+)") do
-        table.insert(t, str)
-    end
-    return t
-end
-function trim(s)
-  return (string.gsub(s, "^%s*(.-)%s*$", "%1"))
-end
 
 LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
     LrDialogs.attachErrorDialogToFunctionContext(context)

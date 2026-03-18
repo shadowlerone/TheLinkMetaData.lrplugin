@@ -4,7 +4,8 @@
 -- at http://regex.info/blog/2016-09-15/2731
 --
 
-local Sections = require 'LinkSections'
+local Sections = require 'utils.LinkSections'
+local LinkTypes = require 'utils.LinkTypes'
 return {
     schemaVersion = 1, -- increment this value any time you make a change to the field definitions below
 
@@ -29,19 +30,7 @@ return {
         id = 'type',
         title = 'Type',
         dataType = 'enum',
-        values = {{
-            value = 'feature',
-            title = 'Feature'
-        }, {
-            value = 'photoessay',
-            title = 'Photo Essay'
-        }, {
-            value = 'brief',
-            title = 'Brief'
-        }, {
-            value = nil,
-            title = ""
-        }},
+        values = LinkTypes,
         searchable = true,
         browsable = true
     }, {
