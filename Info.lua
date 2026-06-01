@@ -24,7 +24,7 @@ return {
 		}
 	},
 	LrExportServiceProvider = {
-		title = "Export with Link Naming Scheme",
+		title = "The Link",
 		file = "LinkExportProviders.lua"
 	},
 	LrPluginInfoProvider = "PluginInfoProvider.lua",

@@ -9,7 +9,7 @@ local types = { {
 	title = 'Brief'
 }, {
 	value = nil,
-	title = ""
+	title = "Article"
 } }
 
 return types

@@ -1,12 +1,7 @@
-Plug-in error log for plug-in at: C:\Users\shadowlerone\Documents\GitHub\TheLinkMetaData.lrplugin
+Plug-in error log for plug-in at: D:\Downloads\modeling-info.lrplugin\TheLinkMetaData.lrplugin
 
 **** Error 1
 
-An error occurred while attempting to run one of the plug-in’s scripts.
-LinkSetupCollections.lua:140: ')' expected near '!'
-
-**** Error 2
-
-The plug-in encountered an error when performing the menu item “Automatically create collections...”.
-LinkSetupCollections.lua:140: ')' expected near '!'
+An error occurred while attempting to load this plug-in’s portion of the Export dialog.
+LinkExportProviders.lua:84: bad argument #1 to 'ipairs' (table expected, got nil)
 

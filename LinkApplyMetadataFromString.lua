@@ -8,9 +8,9 @@ local LrView = import 'LrView'
 local LrBinding = import 'LrBinding'
 local LrColor = import 'LrColor'
 local LrSelection = import 'LrSelection'
-local Sections = require 'utils.LinkSections'
-local LinkTypes = require 'utils.LinkTypes'
-require 'utils.str-utils'
+local Sections = require 'LinkSections'
+local LinkTypes = require 'LinkTypes'
+require 'str-utils'
 
 local catalog
 local cycle_string
@@ -20,7 +20,7 @@ local cycle_string
 LrFunctionContext.postAsyncTaskWithContext("AutoCollections", function(context)
     LrDialogs.attachErrorDialogToFunctionContext(context)
     catalog = LrApplication.activeCatalog()
-    photos = catalog:getTargetPhotos()
+    local photos = catalog:getTargetPhotos()
 
     local f = LrView.osFactory()
     local updateField = f:edit_field{

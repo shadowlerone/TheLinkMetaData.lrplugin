@@ -4,8 +4,8 @@
 -- at http://regex.info/blog/2016-09-15/2731
 --
 
-local Sections = require 'utils.LinkSections'
-local LinkTypes = require 'utils.LinkTypes'
+local Sections = require 'LinkSections'
+local LinkTypes = require 'LinkTypes'
 return {
     schemaVersion = 2, -- increment this value any time you make a change to the field definitions below
 
@@ -57,11 +57,13 @@ return {
         title = 'Online or Print',
         dataType = 'enum',
 		values = {
+			{value=nil, title="Not set"},
 			{value="online",title="Online"},
 			{value="print",title="Print"},
 		},
         searchable = true,
-        browsable = true
+        browsable = true,
+		version = 2
     }, {
         id = 'contributor',
         title = 'Photo Contributor',
