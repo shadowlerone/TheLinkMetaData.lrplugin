@@ -115,8 +115,8 @@ function GetAllMetadata(photo)
 	logger:info "Getting The Link specific metadata"
 	for i, v in ipairs(rawMetaData) do
 		if v.sourcePlugin == "lewis.TheLink.Metadata" then
-			logger:trace(v.id)
-			logger:trace(v.value)
+			-- logger:trace(v.id)
+			-- logger:trace(v.value)
 			-- _metadata[v.id] = v.value
 			local temp = ""
 			for _, v2 in ipairs(CM.metadataFieldsForPhotos) do
@@ -133,19 +133,19 @@ function GetAllMetadata(photo)
 	end
 	logger:info "Getting other metadata"
 	for i, v in pairs(LR_FN) do
-		logger:trace("going through pairs")
-		logger:trace(i)
-		logger:trace(v)
+		-- logger:trace("going through pairs")
+		-- logger:trace(i)
+		-- logger:trace(v)
 		local o = photo:getFormattedMetadata(v)
-		logger:trace(o)
-		logger:trace(type(o))
+		-- logger:trace(o)
+		-- logger:trace(type(o))
 		_metadata[i] = LrPathUtils.removeExtension(o)
 	end
 	for i, v in pairs(LR_Keys) do
-		logger:trace("going through pairs")
-		logger:trace(i)
-		logger:trace(v)
-		logger:trace(type(v))
+		-- logger:trace("going through pairs")
+		-- logger:trace(i)
+		-- logger:trace(v)
+		-- logger:trace(type(v))
 		_metadata[i] = photo:getFormattedMetadata(v)
 	end
 	logger:trace "All metadata obtained. total count: "
@@ -154,7 +154,7 @@ function GetAllMetadata(photo)
 end
 
 function SubstitutePhotoMetadata(photo, str)
-	local _metadata = GetLinkMetadata(photo)
+	local _metadata = GetAllMetadata(photo)
 	return SubstituteMetadata(_metadata, str)
 end
 
@@ -168,10 +168,10 @@ function Substitute(_metadata)
 		else
 			search_tokens = { _t }
 		end
-		logger:trace "checking if token in metadata"
+		-- logger:trace "checking if token in metadata"
 		for _, t in ipairs(search_tokens) do
 			if has_key(_metadata, t) then
-				logger:trace("token " .. t .. " found in metadata table")
+				logger:info("token " .. t .. " found in metadata table")
 				return _metadata[t]
 			end
 		end
@@ -186,7 +186,7 @@ function Substitute(_metadata)
 end
 
 function SubstituteMetadata(_metadata, str)
-	logger:trace "Entering substitute Metadata"
+	-- logger:trace "Entering substitute Metadata"
 	-- find all replaceable tokens
 
 	--[[ local tokens = string.find(str, "%{%b{}%}")
@@ -194,7 +194,7 @@ function SubstituteMetadata(_metadata, str)
 		return tokens[1]
 	end ]]
 	local tokens = {}
-	logger:trace("hunting for tokens")
+	-- logger:trace("hunting for tokens")
 	-- for token in str:gmatch("%{%{([%w_.]+)}}") do
 	-- 	-- checking link metadata
 	-- 	logger:trace("token found:")
@@ -227,16 +227,14 @@ function SubstituteMetadata(_metadata, str)
 
 	-- iterate through final list, gsubbing as we go
 
-	logger:trace "exiting substitute metadata"
+	-- logger:trace "exiting substitute metadata"
 
-	-- final cleanup
-	-- remove duplicate '.'
-	-- sanitize for url
+	
 	return output
 end
 
 function PreviewTemplate(propertyTable, key, value, default_value)
-	logger:trace "Entering Preview Template validation"
+	-- logger:trace "Entering Preview Template validation"
 	-- logger:tracer(photo:getFormattedMetadata('preservedFileName'))
 	-- local photo = catalog:
 	local result = SubstituteMetadata(metadata, value)
@@ -245,7 +243,7 @@ function PreviewTemplate(propertyTable, key, value, default_value)
 	end
 	propertyTable[key] = result
 
-	logger:trace "Exiting Preview Template validation"
+	-- logger:trace "Exiting Preview Template validation"
 	return result
 end
 
@@ -298,13 +296,13 @@ exportServiceProvider.sectionsForTopOfDialog = function(vf, propertyTable)
 	local bind = LrView.bind -- a local shortcut for the binding function
 	-- propertyTable.article_folder = "{{cycle}}.{{type}}.{{section}}.{{slug}}.{{author}}.{{online_print}}"
 
-	logger:trace "sanity check"
-	logger:trace(metadata['contributor'])
+	-- logger:trace "sanity check"
+	-- logger:trace(metadata['contributor'])
 	propertyTable.photo_metadata = metadata
 	propertyTable.photo_link_metadata = metadata
 
 	logger:trace "Checking metadata..."
-	logger:trace(#metadata)
+	-- logger:trace(#metadata)
 	propertyTable.article_folder_preview = SubstituteMetadata(metadata, propertyTable.article_folder)
 	propertyTable.photo_name_preview = SubstituteMetadata(metadata, propertyTable.photo_name)
 	-- propertyTable.photo_name = "{{cycle}}.{{type}}.{{section}}.{{slug}}.{{author}}.{{online_print}}.{{contributor}}.{{filename}}"
@@ -412,9 +410,9 @@ exportServiceProvider.sectionsForTopOfDialog = function(vf, propertyTable)
 								canCreateDirectories = true,
 								allowMultipleSelection = false,
 							})
-							logger:info("Selected path for output")
-							logger:trace(#path)
-							logger:trace(path[1])
+							-- logger:info("Selected path for output")
+							-- logger:trace(#path)
+							-- logger:trace(path[1])
 							if path then
 								propertyTable.volume_directory = LrPathUtils.standardizePath(path[1])
 							end
@@ -573,11 +571,11 @@ function exportServiceProvider.processRenderedPhotos(functionContext, exportCont
 				logger:info(pt.article_folder)
 				logger:info(pt.photo_name)
 				local photo = rendition.photo
-				local _metadata = GetLinkMetadata(photo)
+				local _metadata = GetAllMetadata(photo)
 
-				logger:trace 'metadata parsed'
+				-- logger:trace 'metadata parsed'
 
-				logger:trace 'Creating file name table'
+				-- logger:trace 'Creating file name table'
 
 				local file = {
 					cycle        = _metadata.cycle or '00',
@@ -597,12 +595,23 @@ function exportServiceProvider.processRenderedPhotos(functionContext, exportCont
 					output_child_directory = SubstitutePhotoMetadata(photo, pt.online_location)
 				end
 				local base_dir = LrPathUtils.child(pt.volume_directory, output_child_directory)
-				local dest_dir = LrPathUtils.child(base_dir, SubstitutePhotoMetadata(photo, pt.article_folder))
-				logger:trace('Creating directories: ' .. tostring(LrFileUtils.createAllDirectories(
+				local a_f = SubstitutePhotoMetadata(photo, pt.article_folder)
+				-- final cleanup
+				-- remove duplicate '.'
+				-- sanitize for url
+				-- a_f = string.gsub(a_f, "[^%w%.%-_%s%+&]", "")
+				-- a_f = string.gsub(a_f, " +", " ")
+				a_f = string.gsub(a_f, "%.+", ".")
+				local dest_dir = LrPathUtils.child(base_dir, a_f)
+				
+				logger:info('Creating directories: ' .. tostring(LrFileUtils.createAllDirectories(
 					dest_dir
 				)))
-
-				local new_filename = LrPathUtils.addExtension(SubstitutePhotoMetadata(photo, pt.photo_name), LrPathUtils.extension(rendition.destinationPath))
+				local photo_fp = SubstitutePhotoMetadata(photo, pt.photo_name)
+				-- photo_fp = string.gsub(photo_fp, "[^%w%.%-_%s%+&]", "")
+				-- photo_fp = string.gsub(photo_fp, " +", " ")
+				photo_fp = string.gsub(photo_fp, "%.+", ".")
+				local new_filename = LrPathUtils.addExtension(photo_fp, LrPathUtils.extension(rendition.destinationPath))
 				local full_output_filepath = LrPathUtils.child(dest_dir, new_filename)
 				logger:info('Full output path: ' .. full_output_filepath)
 				logger:info('Copied image: ' .. tostring(LrFileUtils.copy(pathOrMessage, full_output_filepath)))
