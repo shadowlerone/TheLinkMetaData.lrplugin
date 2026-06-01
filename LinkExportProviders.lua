@@ -8,25 +8,33 @@ local LrProgressScope = import "LrProgressScope"
 local LrLogger = import 'LrLogger'
 local LrDate = import 'LrDate'
 local LrTasks = import 'LrTasks'
+local CM = require 'CustomMetadata.lua'
 
-
+local OLD_METHOD = false
 local logger = LrLogger("LinkExportLogger")
 logger:enable('logfile')
-logger.logLevel = "debug"
+logger.logLevel = "info"
 
 local exportServiceProvider = {}
 
 local metadata
 local LR_Keys = {
-	'fileName',
-	"preservedFileName",
-	"rating",
-	"title",
-	"caption",
-	"artist",
-	"headline",
-
+	["rating"] = "rating",
+	["title"] = "title",
+	["caption"] = "caption",
+	["artist"] = "artist",
+	["headline"] = "headline",
 }
+local LR_FN = {
+	['fileName'] = 'preservedFileName',
+	["preservedFileName"] = 'preservedFileName',
+}
+
+
+local ALIASES = {
+	["contributor"] = { "contributor", "artist", ["default"] = "unknown" }
+}
+
 local SELECTOR = "%{%{([%w_.]+)}}"
 -- Source - https://stackoverflow.com/a
 -- Posted by tonypdmtr
@@ -109,18 +117,36 @@ function GetAllMetadata(photo)
 		if v.sourcePlugin == "lewis.TheLink.Metadata" then
 			logger:trace(v.id)
 			logger:trace(v.value)
-			_metadata[v.id] = v.value
+			-- _metadata[v.id] = v.value
+			local temp = ""
+			for _, v2 in ipairs(CM.metadataFieldsForPhotos) do
+				if v2.id == v.id then
+					temp = v2._default
+					break
+				end
+			end
+			_metadata[v.id] = v.value or temp
 			-- table.insert(metadata, v.id, v.value)
 		end
 		-- table.insert(metadata, v.sourcePlugin .. '.' .. v.id, v.value)
 		_metadata[v.sourcePlugin .. '.' .. v.id] = v.value
 	end
 	logger:info "Getting other metadata"
-	for i, v in ipairs(LR_Keys) do
+	for i, v in pairs(LR_FN) do
 		logger:trace("going through pairs")
 		logger:trace(i)
 		logger:trace(v)
-		_metadata[v] = photo:getFormattedMetadata(v)
+		local o = photo:getFormattedMetadata(v)
+		logger:trace(o)
+		logger:trace(type(o))
+		_metadata[i] = LrPathUtils.removeExtension(o)
+	end
+	for i, v in pairs(LR_Keys) do
+		logger:trace("going through pairs")
+		logger:trace(i)
+		logger:trace(v)
+		logger:trace(type(v))
+		_metadata[i] = photo:getFormattedMetadata(v)
 	end
 	logger:trace "All metadata obtained. total count: "
 	logger:trace(#_metadata)
@@ -132,19 +158,31 @@ function SubstitutePhotoMetadata(photo, str)
 	return SubstituteMetadata(_metadata, str)
 end
 
-function _sub(_m, _t)
-	local m
-	logger:trace "checking if token in metadata"
-	if has_key(_m, _t) then
-		logger:trace("token " .. _t .. " found in metadata table")
-		m = _m[_t]
-	else
+function Substitute(_metadata)
+	return function(_t)
+		local m = ""
+		local search_tokens;
+		if has_key(ALIASES, _t) then
+			search_tokens = ALIASES[_t]
+			if has_key(search_tokens, "default") then m = search_tokens["default"] end
+		else
+			search_tokens = { _t }
+		end
+		logger:trace "checking if token in metadata"
+		for _, t in ipairs(search_tokens) do
+			if has_key(_metadata, t) then
+				logger:trace("token " .. t .. " found in metadata table")
+				return _metadata[t]
+			end
+		end
 		logger:warn("token " .. _t .. " not found in metadata table")
-		-- m = "{{" .. token .. "}}"
-		-- Token not found -> replacing with blank
-		m = ""
+		logger:warn "looking for default in aliases"
+		if m then
+			logger:warn("used default value for " .. _t .. ": " .. m)
+		end
+		return m
+		-- return ""
 	end
-	return m
 end
 
 function SubstituteMetadata(_metadata, str)
@@ -157,30 +195,30 @@ function SubstituteMetadata(_metadata, str)
 	end ]]
 	local tokens = {}
 	logger:trace("hunting for tokens")
-	for token in str:gmatch("%{%{([%w_.]+)}}") do
-		-- checking link metadata
-		logger:trace("token found:")
-		logger:trace(token)
-		if not has_key(tokens, token) then
-			local m
-			logger:trace "checking if token in metadata"
-			if has_key(_metadata, token) then
-				logger:trace("token " .. token .. " found in metadata table")
-				m = _metadata[token]
-			else
-				logger:warn("token " .. token .. " not found in metadata table")
-				-- m = "{{" .. token .. "}}"
-				-- Token not found -> replacing with blank
-				m = ""
-			end
-			tokens[token] = m
-		end
-	end
+	-- for token in str:gmatch("%{%{([%w_.]+)}}") do
+	-- 	-- checking link metadata
+	-- 	logger:trace("token found:")
+	-- 	logger:trace(token)
+	-- 	if not has_key(tokens, token) then
+	-- 		local m
+	-- 		logger:trace "checking if token in metadata"
+	-- 		if has_key(_metadata, token) then
+	-- 			logger:trace("token " .. token .. " found in metadata table")
+	-- 			m = _metadata[token]
+	-- 		else
+	-- 			logger:warn("token " .. token .. " not found in metadata table")
+	-- 			-- m = "{{" .. token .. "}}"
+	-- 			-- Token not found -> replacing with blank
+	-- 			m = ""
+	-- 		end
+	-- 		tokens[token] = m
+	-- 	end
+	-- end
 	local output = str
 	-- for token, value in pairs(tokens) do
 	-- 	output = string.gsub(output, "%{%{" .. token .. "}}", value)
 	-- end
-	output = string.gsub(output, SELECTOR, tokens)
+	output = string.gsub(output, SELECTOR, Substitute(_metadata))
 	-- remove duplicates
 	-- iterate through them
 	-- check if it's a token within this plugin
@@ -223,6 +261,9 @@ exportServiceProvider.showSections = {
 }
 
 
+
+
+
 -- Setup presets
 
 local base_length = string.len "{{cycle}}.{{type}}.{{section}}.{{slug}}"
@@ -241,7 +282,7 @@ exportServiceProvider.sectionsForTopOfDialog = function(vf, propertyTable)
 	local filename -- = photo:getFormattedMetadata('preservedFileName')
 
 	catalog = LrApplication.activeCatalog()
-	photo = catalog:getTargetPhoto()
+	photo = catalog:getTargetPhotos()[1]
 	filename = photo:getFormattedMetadata('preservedFileName')
 	metadata = GetAllMetadata(photo)
 
@@ -424,13 +465,13 @@ function exportServiceProvider.processRenderedPhotos(functionContext, exportCont
 	local nPhotos = exportSession:countRenditions()
 
 	local pt = exportContext.propertyTable
-	logger:info "================="
-	logger:info "Export settings:"
-	logger:info(pt.volume_directory)
-	logger:info(pt.online_location)
-	logger:info(pt.print_location)
-	logger:info(pt.article_folder)
-	logger:info(pt.photo_name)
+	-- logger:info "================="
+	-- logger:info "Export settings:"
+	-- logger:info(pt.volume_directory)
+	-- logger:info(pt.online_location)
+	-- logger:info(pt.print_location)
+	-- logger:info(pt.article_folder)
+	-- logger:info(pt.photo_name)
 	logger:trace("Setting up Scope")
 	local progressScope = exportContext:configureProgress {
 		title = nPhotos > 1
@@ -456,69 +497,117 @@ function exportServiceProvider.processRenderedPhotos(functionContext, exportCont
 
 			if success then
 				logger:trace "Success..."
+				if OLD_METHOD then
+					local photo = rendition.photo
+					local metadata = GetLinkMetadata(photo)
+
+					logger:trace 'metadata parsed'
+
+					logger:trace 'Creating file name table'
+
+					local file = {
+						cycle        = metadata.cycle or '00',
+						type         = metadata.type,
+						section      = metadata.section or "unknown",
+						slug         = metadata.slug or "unknown",
+						author       = metadata.author or "unknown",
+						online_print = metadata.online_print or "online",
+						contributor  = metadata.contributor or photo:getFormattedMetadata('artist') or "unknown",
+						filename     = LrPathUtils.removeExtension(photo:getFormattedMetadata("preservedFileName")),
+					}
+					logger:trace 'File table'
+					logger:trace('\t' .. tostring(file.cycle))
+					logger:trace('\t' .. tostring(file.section))
+					logger:trace('\t' .. tostring(file.slug))
+					logger:trace('\t' .. tostring(file.author))
+					logger:trace('\t' .. tostring(file.online_print))
+					logger:trace('\t' .. tostring(file.contributor))
+					logger:trace('\t' .. tostring(file.filename))
+					logger:trace '---'
+					local file_array = {
+						file.cycle, file.type, file.section, file.slug, file.author, file.online_print, file.contributor,
+						file.filename
+					}
+					file_array = CleanNils(file_array)
+					-- logger:trace ('\t' .. tostring(article_folder.cycle))
+					logger:trace '---'
+					logger:trace 'File name table created'
+					logger:trace 'Creating folder table'
+
+
+					local article_folder = {
+						file.cycle, file.type, file.section, file.slug, file.author, file.online_print
+					}
+					article_folder = CleanNils(article_folder)
+					local new_filename = LrPathUtils.addExtension(table.concat(file_array, "."),
+						LrPathUtils.extension(rendition.destinationPath))
+					logger:trace('Renamed file: ' .. new_filename)
+					-- local section_folder_name = table.concat(section_folder, ".")
+
+					local article_folder_name = table.concat(article_folder, ".")
+					logger:trace('Named Folder: ' .. article_folder_name)
+					local outdir = article_folder_name
+					local dest_dir = LrPathUtils.child(LrPathUtils.parent(pathOrMessage), outdir)
+					-- logger:trace 'Create directories'
+					logger:trace('Creating directories: ' .. tostring(LrFileUtils.createAllDirectories(
+						dest_dir
+					)))
+
+					local full_output_filepath = LrPathUtils.child(dest_dir, new_filename)
+					logger:trace('Full output path: ' .. full_output_filepath)
+					logger:trace('Copied image: ' .. tostring(LrFileUtils.copy(pathOrMessage, full_output_filepath)))
+					-- os:rename(LrPathUtils.child (dest_dir,LrPathUtils.leafName(pathOrMessage)), LrPathUtils.child (dest_dir,new_filename))
+					-- local tmp_name = LrPathUtils.leafName(pathOrMessage)
+					-- DO the magic
+					if LrFileUtils.delete(pathOrMessage) then
+						logger:trace 'Deleted image'
+					end
+				end
+				-- 1. make directory for type.
+
+				logger:info "Export settings:"
+				logger:info(pathOrMessage)
+				logger:info(pt.volume_directory)
+				logger:info(pt.online_location)
+				logger:info(pt.print_location)
+				logger:info(pt.article_folder)
+				logger:info(pt.photo_name)
 				local photo = rendition.photo
-				local metadata = GetLinkMetadata(photo)
+				local _metadata = GetLinkMetadata(photo)
 
 				logger:trace 'metadata parsed'
 
 				logger:trace 'Creating file name table'
 
 				local file = {
-					cycle        = metadata.cycle or '00',
-					type         = metadata.type,
-					section      = metadata.section or "unknown",
-					slug         = metadata.slug or "unknown",
-					author       = metadata.author or "unknown",
-					online_print = metadata.online_print or "online",
-					contributor  = metadata.contributor or photo:getFormattedMetadata('artist') or "unknown",
+					cycle        = _metadata.cycle or '00',
+					type         = _metadata.type,
+					section      = _metadata.section or "unknown",
+					slug         = _metadata.slug or "unknown",
+					author       = _metadata.author or "unknown",
+					online_print = _metadata.online_print or "online",
+					contributor  = _metadata.contributor or photo:getFormattedMetadata('artist') or "unknown",
 					filename     = LrPathUtils.removeExtension(photo:getFormattedMetadata("preservedFileName")),
 				}
-				logger:trace 'File table'
-				logger:trace('\t' .. tostring(file.cycle))
-				logger:trace('\t' .. tostring(file.section))
-				logger:trace('\t' .. tostring(file.slug))
-				logger:trace('\t' .. tostring(file.author))
-				logger:trace('\t' .. tostring(file.online_print))
-				logger:trace('\t' .. tostring(file.contributor))
-				logger:trace('\t' .. tostring(file.filename))
-				logger:trace '---'
-				local file_array = {
-					file.cycle, file.type, file.section, file.slug, file.author, file.online_print, file.contributor,
-					file.filename
-				}
-				file_array = CleanNils(file_array)
-				-- logger:trace ('\t' .. tostring(article_folder.cycle))
-				logger:trace '---'
-				logger:trace 'File name table created'
-				logger:trace 'Creating folder table'
 
-
-				local article_folder = {
-					file.cycle, file.type, file.section, file.slug, file.author, file.online_print
-				}
-				article_folder = CleanNils(article_folder)
-				local new_filename = LrPathUtils.addExtension(table.concat(file_array, "."),
-					LrPathUtils.extension(rendition.destinationPath))
-				logger:trace('Renamed file: ' .. new_filename)
-				-- local section_folder_name = table.concat(section_folder, ".")
-
-				local article_folder_name = table.concat(article_folder, ".")
-				logger:trace('Named Folder: ' .. article_folder_name)
-				local outdir = article_folder_name
-				local dest_dir = LrPathUtils.child(LrPathUtils.parent(pathOrMessage), outdir)
-				-- logger:trace 'Create directories'
+				local output_child_directory
+				if file.online_print == "print" then
+					output_child_directory = SubstitutePhotoMetadata(photo, pt.print_location)
+				else
+					output_child_directory = SubstitutePhotoMetadata(photo, pt.online_location)
+				end
+				local base_dir = LrPathUtils.child(pt.volume_directory, output_child_directory)
+				local dest_dir = LrPathUtils.child(base_dir, SubstitutePhotoMetadata(photo, pt.article_folder))
 				logger:trace('Creating directories: ' .. tostring(LrFileUtils.createAllDirectories(
 					dest_dir
 				)))
 
+				local new_filename = LrPathUtils.addExtension(SubstitutePhotoMetadata(photo, pt.photo_name), LrPathUtils.extension(rendition.destinationPath))
 				local full_output_filepath = LrPathUtils.child(dest_dir, new_filename)
-				logger:trace('Full output path: ' .. full_output_filepath)
-				logger:trace('Copied image: ' .. tostring(LrFileUtils.copy(pathOrMessage, full_output_filepath)))
-				-- os:rename(LrPathUtils.child (dest_dir,LrPathUtils.leafName(pathOrMessage)), LrPathUtils.child (dest_dir,new_filename))
-				-- local tmp_name = LrPathUtils.leafName(pathOrMessage)
-				-- DO the magic
+				logger:info('Full output path: ' .. full_output_filepath)
+				logger:info('Copied image: ' .. tostring(LrFileUtils.copy(pathOrMessage, full_output_filepath)))
 				if LrFileUtils.delete(pathOrMessage) then
-					logger:trace 'Deleted image'
+					logger:info 'Deleted image'
 				end
 			end
 		end
